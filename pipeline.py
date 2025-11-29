@@ -45,18 +45,42 @@ def pipeline(letter_text: str):
         llm1_result = json.load(f)
 
     # ---------------------------------------------------------
-    # 5. Запуск LLM2 (генерация 4 ответов)
+    # 5. Запуск RAG1 (подбор валидных и рекомендованных документов)
     # ---------------------------------------------------------
-    # В llm2_yandex.py данные читаются из файлов,
-    # поэтому здесь никаких аргументов передавать не нужно.
+    run_script("rag1_yandex.py")
+
+    with open("rag_docs_output.json", "r", encoding="utf-8") as f:
+        rag_docs_result = json.load(f)
+
+    # ---------------------------------------------------------
+    # 6. Запуск LLM2 (генерация 4 ответов)
+    # ---------------------------------------------------------
+    # В llm2_yandex.py ты уже читаешь:
+    # - letter.txt
+    # - ner_output.json
+    # - classification_output.json
+    # - llm1_output.json
+    # + ДОБАВИШЬ чтение rag_docs_output.json
     run_script("llm2_yandex.py")
 
     with open("llm2_output.json", "r", encoding="utf-8") as f:
         llm2_result = json.load(f)
 
     # ---------------------------------------------------------
-    # 6. Запуск LLM3 (комплаенс-проверка)
+    # 7. Запуск RAG2 (анализ использования документов в ответах LLM2)
     # ---------------------------------------------------------
+    run_script("rag2_yandex.py")
+
+    with open("rag_usage_output.json", "r", encoding="utf-8") as f:
+        rag_usage_result = json.load(f)
+
+    # ---------------------------------------------------------
+    # 8. Запуск LLM3 (комплаенс-проверка)
+    # ---------------------------------------------------------
+    # В llm3_yandex.py нужно читать:
+    # - llm2_output.json  (черновики ответов)
+    # - rag_docs_output.json  (какие документы рекомендовались)
+    # - rag_usage_output.json (как они были использованы)
     run_script("llm3_yandex.py")
 
     with open("llm3_output.json", "r", encoding="utf-8") as f:
@@ -66,6 +90,7 @@ def pipeline(letter_text: str):
     print("Финальный результат находится в llm3_output.json")
 
     return llm3_result
+
 
 
 # ---------------------------------------------------------
