@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant - Генератор деловой переписки</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .email-input, .email-output {
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .email-meta {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .email-meta .label {
+            font-weight: bold;
+            color: #666;
+            font-size: 14px;
+        }
+
+        textarea {
+            width: 100%;
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea[readonly] {
+            background-color: #f8f9fa;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .analysis-results {
+            margin-top: 20px;
+        }
+
+        .analysis-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .analysis-item h4 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .analysis-item p {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .style-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .style-btn {
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .style-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .style-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .primary-btn {
+            padding: 18px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .generate-btn {
+            background: #27ae60;
+            color: white;
+        }
+
+        .generate-btn:hover {
+            background: #219a52;
+            transform: translateY(-2px);
+        }
+
+        .approval-btn {
+            background: #3498db;
+            color: white;
+        }
+
+        .approval-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-high {
+            background: #e74c3c;
+        }
+
+        .status-medium {
+            background: #f39c12;
+        }
+
+        .status-low {
+            background: #27ae60;
+        }
+
+        .entity-tag {
+            display: inline-block;
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin: 2px;
+            color: #666;
+        }
+
+        .doc-tag {
+            cursor: pointer;
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+        }
+
+        .doc-tag.active {
+            background: #bbdefb;
+        }
+
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #27ae60;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+        }
+
+        .approval-route {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .approval-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            flex: 1;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .step-name {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .step-arrow {
+            color: #667eea;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+
+        .route-text {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Assistant - Генератор деловой переписки</h1>
+            <p>Интеллектуальная система анализа и генерации официальных писем</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Левая колонка - Входящее письмо и анализ -->
+            <div class="card email-input">
+                <h2>📥 Входящее письмо</h2>
+                
+                <div class="email-meta">
+                    <span class="label">От:</span>
+                    <span>legal@creditor-company.ru</span>
+                </div>
+                <div class="email-meta">
+                    <span class="label">Тема:</span>
+                    <span>Досудебная претензия по договору займа № 45-ПСБ</span>
+                </div>
+                <div class="email-meta">
+                    <span class="label">Дата:</span>
+                    <span>25 октября 2024 г.</span>
+                </div>
+
+                <textarea id="input-email" readonly placeholder="Текст входящего письма...">
+Уважаемые господа,
+
+Настоящим письмом выражаем вам досудебную претензию по договору займа № 45-ПСБ от 12.03.2023.
+
+В соответствии с условиями договора, ваша организация обязалась вернуть сумму займа в размере 100 000 рублей до 15.09.2024. На сегодняшний день, 25.10.2024, обязательство не исполнено, просрочка составляет 40 дней.
+
+В связи с нарушением условий договора, мы требуем в течение 10 рабочих дней:
+1. Погасить задолженность по договору займа в размере 100 000 рублей.
+2. Уплатить проценты за пользование чужими денежными средствами в размере 5 000 рублей.
+
+В случае неисполнения требований в указанный срок, мы будем вынуждены обратиться в суд с иском о взыскании указанных сумм, а также судебных расходов.
+
+С уважением,
+ООО "Кредитор"
+                </textarea>
+
+                <button class="primary-btn generate-btn" id="analyze-btn">
+                    🔍 Проанализировать письмо
+                </button>
+
+                <div class="analysis-results" id="analysis-results" style="display: none;">
+                    <div class="analysis-item">
+                        <h4>⚖️ Юридическая квалификация</h4>
+                        <p id="qualification-text"><strong>Досудебная претензия</strong> по договору займа</p>
+                    </div>
+                    <div class="analysis-item">
+                        <h4>⏰ Дедлайн</h4>
+                        <p>
+                            <span class="status-indicator status-high"></span>
+                            <strong id="deadline-text">Срок не указан</strong>
+                        </p>
+                    </div>
+                    <div class="analysis-item">
+                        <h4>🔍 Извлечённые сущности</h4>
+                        <div id="entities-container">
+                            <!-- сущности из ui_payload.json -->
+                        </div>
+                    </div>
+                    <div class="analysis-item">
+                        <h4>📎 Рекомендуемые документы</h4>
+                        <div id="recommended-docs-container">
+                            <!-- документы из ui_payload.json -->
+                        </div>
+                    </div>
+                    <div class="analysis-item">
+                        <h4>🔄 Маршрут согласования</h4>
+                        <p id="route-text" class="route-text">Маршрут не определён</p>
+                        <div class="approval-route">
+                            <div class="approval-step">
+                                <div class="step-number">1</div>
+                                <div class="step-name"><b>Младший юрист</b></div>
+                            </div>
+                            <div class="step-arrow">→</div>
+                            <div class="approval-step">
+                                <div class="step-number">2</div>
+                                <div class="step-name">Ведущий юрист</div>
+                            </div>
+                            <div class="step-arrow">→</div>
+                            <div class="approval-step">
+                                <div class="step-number">3</div>
+                                <div class="step-name">Нач. отдела договорного права</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Правая колонка - Генерация ответа -->
+            <div class="card email-output">
+                <h2>📤 Сгенерированный ответ</h2>
+                
+                <div class="style-buttons">
+                    <button class="style-btn active" data-style="formal">
+                        🏛️ Официальный стиль
+                    </button>
+                    <button class="style-btn" data-style="business">
+                        💼 Деловой стиль
+                    </button>
+                    <button class="style-btn" data-style="client">
+                        👥 Клиентоориентированный
+                    </button>
+                    <button class="style-btn" data-style="brief">
+                        📋 Краткий ответ
+                    </button>
+                </div>
+
+                <textarea id="output-email" placeholder="Здесь появится сгенерированный ответ..." readonly></textarea>
+
+                <div class="action-buttons">
+                    <button class="primary-btn generate-btn" id="generate-btn">
+                        ✨ Сгенерировать ответ
+                    </button>
+                    <button class="primary-btn approval-btn" id="approval-btn">
+                        📤 Отправить на согласование
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        Письмо успешно отправлено на согласование!
+    </div>
+
+    <script>
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const generateBtn = document.getElementById('generate-btn');
+        const approvalBtn = document.getElementById('approval-btn');
+        const styleButtons = document.querySelectorAll('.style-btn');
+        const analysisResults = document.getElementById('analysis-results');
+        const notification = document.getElementById('notification');
+        const outputEmail = document.getElementById('output-email');
+
+        const entitiesContainer = document.getElementById('entities-container');
+        const recommendedDocsContainer = document.getElementById('recommended-docs-container');
+        const qualificationText = document.getElementById('qualification-text');
+        const deadlineElement = document.getElementById('deadline-text');
+        const routeElement = document.getElementById('route-text');
+
+        let currentState = {
+            style: 'formal',
+            analyzed: false,
+            generated: false
+        };
+
+        const defaultResponses = {
+            formal:  'Официальный ответ (демо)...',
+            business:'Более гибкий деловой тон (демо)...',
+            client:  'Клиентоориентированный ответ (демо)...',
+            brief:   'Краткий ответ (демо)...'
+        };
+
+        let responses = { ...defaultResponses };
+        let uiData = null;
+
+        // ========== Загрузка ui_payload.json ==========
+        fetch('ui_payload.json')
+            .then(res => {
+                if (!res.ok) throw new Error('ui_payload.json not found');
+                return res.json();
+            })
+            .then(data => {
+                uiData = data;
+
+                // Ответы для textarea
+                if (data.answers) {
+                    responses.formal   = data.answers.formal   || responses.formal;
+                    responses.business = data.answers.business || responses.business;
+                    responses.client   = data.answers.client   || responses.client;
+                    responses.brief    = data.answers.brief    || responses.brief;
+                }
+
+                // Квалификация / тип / риск
+                if (data.classification && qualificationText) {
+                    const c = data.classification;
+                    const parts = [];
+                    if (c.type) parts.push(c.type);
+                    if (c.urgency) parts.push(`Срочность: ${c.urgency}`);
+                    if (c.legal_risk) parts.push(`Юр. риск: ${c.legal_risk}`);
+                    qualificationText.textContent = parts.join(' • ');
+                }
+
+                // Дедлайн: сначала абсолютный, если его нет — текст из NER
+                if (deadlineElement) {
+                    let dl = (data.classification && data.classification.deadline) || null;
+                    if (!dl && data.ner && Array.isArray(data.ner.deadlines) && data.ner.deadlines.length > 0) {
+                        dl = data.ner.deadlines[0].text || data.ner.deadlines[0].date;
+                    }
+                    deadlineElement.textContent = dl || 'Срок не указан';
+                }
+
+                // Сущности из NER
+                if (entitiesContainer && data.ner) {
+                    entitiesContainer.innerHTML = '';
+                    const ner = data.ner;
+
+                    const addTag = (label, value) => {
+                        const tag = document.createElement('span');
+                        tag.className = 'entity-tag';
+                        tag.textContent = label + ': ' + value;
+                        entitiesContainer.appendChild(tag);
+                    };
+
+                    (ner.contract_numbers || []).forEach(cn => addTag('Договор', cn));
+                    (ner.organizations || []).forEach(org => addTag('Орг.', org));
+                    (ner.law_refs || []).forEach(law => addTag('НПА', law));
+                    (ner.deadlines || []).forEach(d => {
+                        const text = d.text || d.date || 'дедлайн';
+                        addTag('Срок', text);
+                    });
+
+                    if (ner.contacts) {
+                        (ner.contacts.emails || []).forEach(e => addTag('Email', e));
+                        (ner.contacts.phones || []).forEach(p => addTag('Тел.', p));
+                        (ner.contacts.persons || []).forEach(p => addTag('Контакт', p));
+                    }
+                }
+
+                // Маршрут согласования из departments
+                if (routeElement && data.classification) {
+                    const deps = data.classification.departments || [];
+                    routeElement.textContent = deps.length ? deps.join(' → ') : 'Маршрут не определён';
+                }
+
+                // Рекомендуемые документы (RAG)
+                if (recommendedDocsContainer && data.rag_docs) {
+                    const recDocs = data.rag_docs.recommended_docs || [];
+                    recommendedDocsContainer.innerHTML = '';
+
+                    if (recDocs.length === 0) {
+                        const span = document.createElement('span');
+                        span.className = 'entity-tag';
+                        span.textContent = 'Рекомендуемые документы не найдены';
+                        recommendedDocsContainer.appendChild(span);
+                    } else {
+                        recDocs.forEach(doc => {
+                            const btn = document.createElement('button');
+                            btn.className = 'entity-tag doc-tag';
+                            btn.textContent = doc.name || doc.code || 'Документ';
+                            btn.title = doc.reason || '';
+
+                            btn.addEventListener('click', () => {
+                                btn.classList.toggle('active');
+                            });
+
+                            recommendedDocsContainer.appendChild(btn);
+                        });
+                    }
+                }
+
+                console.log('UI payload loaded');
+            })
+            .catch(err => {
+                console.warn('Не удалось загрузить ui_payload.json, UI работает в демо-режиме:', err);
+            });
+
+        // ========== Переключение стилей ==========
+        styleButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                styleButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentState.style = btn.dataset.style;
+
+                if (currentState.generated) {
+                    generateResponse();
+                }
+            });
+        });
+
+        // ========== Анализ письма ==========
+        analyzeBtn.addEventListener('click', () => {
+            analyzeBtn.classList.add('loading');
+            analyzeBtn.innerHTML = '⏳ Анализируем...';
+
+            setTimeout(() => {
+                analysisResults.style.display = 'block';
+                currentState.analyzed = true;
+                analyzeBtn.classList.remove('loading');
+                analyzeBtn.innerHTML = '✅ Письмо проанализировано';
+
+                // Автоматически генерируем ответ после анализа
+                generateBtn.click();
+            }, 800);
+        });
+
+        // ========== Генерация ответа ==========
+        generateBtn.addEventListener('click', () => {
+            if (!currentState.analyzed) {
+                alert('Сначала проанализируйте письмо');
+                return;
+            }
+
+            generateBtn.classList.add('loading');
+            generateBtn.innerHTML = '⏳ Генерируем ответ...';
+
+            setTimeout(() => {
+                generateResponse();
+                currentState.generated = true;
+                generateBtn.classList.remove('loading');
+                generateBtn.innerHTML = '✅ Ответ сгенерирован';
+            }, 800);
+        });
+
+        function generateResponse() {
+            const style = currentState.style;
+            outputEmail.value = responses[style] || '';
+        }
+
+        // ========== Отправка на согласование ==========
+        approvalBtn.addEventListener('click', () => {
+            if (!currentState.generated) {
+                alert('Сначала сгенерируйте ответ');
+                return;
+            }
+
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+
+            console.log('Отправка на согласование:', {
+                style: currentState.style,
+                content: outputEmail.value,
+                route: routeElement ? routeElement.textContent : null,
+                deadline: deadlineElement ? deadlineElement.textContent : null
+            });
+        });
+
+        // Автоматический анализ при загрузке (демо)
+        setTimeout(() => {
+            analyzeBtn.click();
+        }, 1000);
+    </script>
+</body>
+</html>
